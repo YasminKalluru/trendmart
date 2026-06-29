@@ -5,7 +5,7 @@ import lombok.Data;
 
 @Entity
 @Data
-public class Product {
+public class Category {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -13,17 +13,7 @@ public class Product {
 
     private String name;
 
-    private double price;
-
-    private String category;
-
-    @Column(length = 1000)
+    @Column(length = 500)
     private String description;
-
-    private String imageUrl;
-
-    private double rating;
-
-    private Integer stock;
 
 }

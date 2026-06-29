@@ -1,15 +1,14 @@
 package com.yasmin.trendmart.entity;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 @Entity
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class Cart {
+@Table(name = "review")
+public class Review {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -17,10 +16,12 @@ public class Cart {
 
     private Long userId;
 
-    private String productName;
+    private Long productId;
 
-    private double price;
+    private String userName;
 
-    private int quantity;
+    private Integer rating;
 
+    @Column(length = 1000)
+    private String comment;
 }

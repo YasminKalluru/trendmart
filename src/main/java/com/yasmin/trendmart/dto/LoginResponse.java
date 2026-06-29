@@ -7,10 +7,11 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class ApiResponse<T> {
+public class LoginResponse {
 
-    private boolean success;
-    private String message;
-    private T data;
+    private String token;
+    private String role;
+    private String name;
+    private Long userId;
 
 }

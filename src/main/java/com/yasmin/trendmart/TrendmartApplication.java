@@ -9,5 +9,4 @@ public class TrendmartApplication {
 	public static void main(String[] args) {
 		SpringApplication.run(TrendmartApplication.class, args);
 	}
-
 }

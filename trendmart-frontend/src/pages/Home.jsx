@@ -1,187 +1,394 @@
 import { Link } from "react-router-dom";
 import { useEffect, useState } from "react";
 import axios from "axios";
+import Navbar from "../components/Navbar";
+import Footer from "../components/Footer";
+import { toast } from "react-toastify";
 
 function Home() {
 
     const [products, setProducts] = useState([]);
     const [search, setSearch] = useState("");
     const [selectedCategory, setSelectedCategory] = useState("All");
+    const [sortBy, setSortBy] = useState("default");
+    const [ratings, setRatings] = useState({});
+
+    const [currentPage, setCurrentPage] = useState(0);
+    const [totalPages, setTotalPages] = useState(0);
+    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
 
-        axios.get("http://localhost:8081/api/products/all")
-            .then((response) => {
-                setProducts(response.data);
-            })
-            .catch((error) => {
+        const fetchProducts = async () => {
+
+            try {
+
+                setLoading(true);
+
+                const response = await axios.get(
+                    `http://localhost:8081/api/products?page=${currentPage}&size=6`
+                );
+
+                setProducts(response.data.content);
+                setTotalPages(response.data.totalPages);
+
+                const ratingMap = {};
+
+                for (const product of response.data.content) {
+
+                    try {
+
+                        const ratingResponse = await axios.get(
+                            `http://localhost:8081/api/reviews/average/${product.id}`
+                        );
+
+                        ratingMap[product.id] = ratingResponse.data;
+
+                    } catch {
+
+                        ratingMap[product.id] = 0;
+
+                    }
+
+                }
+
+                setRatings(ratingMap);
+                setLoading(false);
+            }
+
+            catch (error) {
+
                 console.log(error);
-            });
+                setLoading(false);
 
-    }, []);
+            }
 
-    const filteredProducts = products.filter((product) => {
+        };
 
-        const matchesSearch =
-            product.name.toLowerCase().includes(search.toLowerCase());
+        fetchProducts();
 
-        const matchesCategory =
-            selectedCategory === "All" ||
-            product.category === selectedCategory;
+    }, [currentPage]);
 
-        return matchesSearch && matchesCategory;
-    });
+    const filteredProducts = products
+        .filter((product) => {
 
+            const matchesSearch =
+                product.name.toLowerCase().includes(search.toLowerCase());
+
+            const matchesCategory =
+                selectedCategory === "All" ||
+                product.category === selectedCategory;
+
+            return matchesSearch && matchesCategory;
+
+        })
+        .sort((a, b) => {
+
+            if (sortBy === "lowToHigh") {
+
+                return a.price - b.price;
+
+            }
+
+            if (sortBy === "highToLow") {
+
+                return b.price - a.price;
+
+            }
+
+            return 0;
+
+        });
+
+    const categories = [
+        "All",
+        ...new Set(
+            products
+                .map(product => product.category)
+                .filter(category => category)
+        )
+    ];
 
     const addToCart = (product) => {
 
-        axios.post("http://localhost:8081/api/cart/add", {
-            productName: product.name,
-            price: product.price,
-            quantity: 1
-        })
+        axios.post(
+            "http://localhost:8081/api/cart/add",
+            {
+                userId: localStorage.getItem("userId"),
+                productName: product.name,
+                price: product.price,
+                quantity: 1
+            }
+        )
             .then(() => {
-                alert(product.name + " added to cart!");
+
+                toast.success(product.name + " added to cart!");
+
             })
             .catch((error) => {
+
                 console.log(error);
-                alert("Failed to add item to cart");
+
+                toast.error("Failed to add item to cart");
+
             });
+
+    };
+
+    const addToWishlist = async (product) => {
+
+        try {
+
+            const userId = localStorage.getItem("userId");
+
+            await axios.post(
+                "http://localhost:8081/api/wishlist/add",
+                {
+                    userId,
+                    productName: product.name,
+                    price: product.price,
+                    imageUrl: product.imageUrl
+                }
+            );
+
+            toast.success("Added to Wishlist");
+
+        }
+
+        catch (error) {
+
+            console.log(error);
+
+            toast.error("Failed to add to wishlist");
+
+        }
+
     };
 
     return (
+
         <div className="container">
 
-            <h1>TrendMart</h1>
+            <Navbar />
 
-            <Link to="/login">
-                <button>Login</button>
-            </Link>
+            <div className="mt-4">
 
-            <br /><br />
+                <h2>Products</h2>
 
-            <Link to="/register">
-                <button>Register</button>
-            </Link>
+                <input
+                    type="text"
+                    className="form-control mb-3"
+                    placeholder="Search products..."
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                />
 
-            <br /><br />
-
-            <Link to="/cart">
-                <button>Cart</button>
-            </Link>
-
-            <br /><br />
-
-            <Link to="/orders">
-                <button>Orders</button>
-            </Link>
-
-            <br /><br />
-
-            <h2>Products</h2>
-
-            <input
-                type="text"
-                placeholder="Search products..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-            />
-
-            <br /><br />
-
-            <div className="mb-3">
-
-                <button
-                    className="btn btn-secondary me-2"
-                    onClick={() => setSelectedCategory("All")}
+                <select
+                    className="form-select mb-3"
+                    value={sortBy}
+                    onChange={(e) => setSortBy(e.target.value)}
                 >
-                    All
-                </button>
 
-                <button
-                    className="btn btn-primary me-2"
-                    onClick={() => setSelectedCategory("Electronics")}
-                >
-                    Electronics
-                </button>
+                    <option value="default">
+                        Default
+                    </option>
 
-                <button
-                    className="btn btn-success me-2"
-                    onClick={() => setSelectedCategory("Accessories")}
-                >
-                    Accessories
-                </button>
+                    <option value="lowToHigh">
+                        Price Low → High
+                    </option>
 
-                <button
-                    className="btn btn-warning me-2"
-                    onClick={() => setSelectedCategory("Wearables")}
-                >
-                    Wearables
-                </button>
+                    <option value="highToLow">
+                        Price High → Low
+                    </option>
 
-                <button
-                    className="btn btn-danger"
-                    onClick={() => setSelectedCategory("Gaming")}
-                >
-                    Gaming
-                </button>
+                </select>
 
-            </div>
+                <div className="mb-4">
 
+                    {categories.map((category) => (
 
-            {filteredProducts.length === 0 ? (
-                <p>No products found.</p>
-            ) : (
-                <div className="row">
+                        <button
+                            key={category}
+                            className={`btn me-2 mb-2 ${
+                                selectedCategory === category
+                                    ? "btn-primary"
+                                    : "btn-outline-primary"
+                            }`}
+                            onClick={() => setSelectedCategory(category)}
+                        >
+                            {category}
+                        </button>
 
-                    {filteredProducts.map((product) => (
+                    ))}
 
-                        <div key={product.id} className="col-md-4 mb-4">
+                </div>
 
-                            <div className="card h-100 shadow">
+                {loading ? (
 
-                                <div className="card-body">
+                    <div className="text-center my-5">
 
-                                    <h4 className="card-title">
-                                        {product.name}
-                                    </h4>
+                        <div
+                            className="spinner-border text-primary"
+                            role="status"
+                        >
+                            <span className="visually-hidden">
+                                Loading...
+                            </span>
+                        </div>
 
-                                    <h6 className="text-muted">
-                                        {product.category}
-                                    </h6>
+                        <h5 className="mt-3">
+                            Loading Products...
+                        </h5>
 
-                                    <p className="mt-3">
-                                        {product.description}
-                                    </p>
+                    </div>
 
-                                    <h5>
-                                        ₹{product.price}
-                                    </h5>
+                ) : filteredProducts.length === 0 ? (
 
-                                </div>
+                    <p>No products found.</p>
 
-                                <div className="card-footer bg-white border-0">
+                ) : (
 
-                                    <button
-                                        className="btn btn-dark w-100"
-                                        onClick={() => addToCart(product)}
-                                    >
-                                        Add To Cart
-                                    </button>
+                    <div className="row">
+
+                        {filteredProducts.map((product) => (
+
+                            <div
+                                key={product.id}
+                                className="col-md-4 mb-4"
+                            >
+
+                                <div className="card h-100 shadow">
+
+                                    <img
+                                        src={product.imageUrl}
+                                        className="card-img-top"
+                                        alt={product.name}
+                                        style={{
+                                            height: "220px",
+                                            objectFit: "cover"
+                                        }}
+                                    />
+
+                                    <div className="card-body">
+
+                                        <Link
+                                            to={`/product/${product.id}`}
+                                            className="text-decoration-none"
+                                        >
+                                            <h4>{product.name}</h4>
+                                        </Link>
+
+                                        <h6 className="text-muted">
+                                            {product.category}
+                                        </h6>
+
+                                        <p className="mt-3">
+                                            {product.description}
+                                        </p>
+
+                                        <h5>
+                                            ₹{product.price}
+                                        </h5>
+
+                                        <p className="text-warning fw-bold">
+                                            ⭐ {ratings[product.id]?.toFixed(1) || "0.0"} / 5
+                                        </p>
+
+                                        <div className="mb-2">
+
+                                            {product.stock > 0 ? (
+
+                                                <span className="badge bg-success">
+                                                    In Stock ({product.stock})
+                                                </span>
+
+                                            ) : (
+
+                                                <span className="badge bg-danger">
+                                                    Out of Stock
+                                                </span>
+
+                                            )}
+
+                                        </div>
+
+                                    </div>
+
+                                    <div className="card-footer bg-white border-0">
+
+                                        <button
+                                            className="btn btn-outline-danger w-100 mb-2"
+                                            onClick={() => addToWishlist(product)}
+                                        >
+                                            ❤️ Wishlist
+                                        </button>
+
+                                        <button
+                                            className="btn btn-dark w-100"
+                                            disabled={product.stock === 0}
+                                            onClick={() => addToCart(product)}
+                                        >
+                                            {product.stock === 0
+                                                ? "Out of Stock"
+                                                : "Add To Cart"}
+                                        </button>
+
+                                    </div>
 
                                 </div>
 
                             </div>
 
-                        </div>
+                        ))}
+
+                    </div>
+
+                )}
+                <div className="d-flex justify-content-center mt-4">
+
+                    <button
+                        className="btn btn-outline-primary me-2"
+                        disabled={currentPage === 0}
+                        onClick={() => setCurrentPage(currentPage - 1)}
+                    >
+                        Previous
+                    </button>
+
+                    {[...Array(totalPages)].map((_, index) => (
+
+                        <button
+                            key={index}
+                            className={`btn me-2 ${
+                                currentPage === index
+                                    ? "btn-primary"
+                                    : "btn-outline-primary"
+                            }`}
+                            onClick={() => setCurrentPage(index)}
+                        >
+                            {index + 1}
+                        </button>
 
                     ))}
 
+                    <button
+                        className="btn btn-outline-primary"
+                        disabled={currentPage === totalPages - 1}
+                        onClick={() => setCurrentPage(currentPage + 1)}
+                    >
+                        Next
+                    </button>
+
                 </div>
-            )}
+
+            </div>
+
+            <Footer />
 
         </div>
+
     );
+
 }
 
 export default Home;
+

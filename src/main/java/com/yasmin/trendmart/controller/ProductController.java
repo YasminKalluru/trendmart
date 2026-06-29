@@ -1,10 +1,10 @@
 package com.yasmin.trendmart.controller;
 import org.springframework.web.bind.annotation.CrossOrigin;
-
 import com.yasmin.trendmart.entity.Product;
 import com.yasmin.trendmart.service.ProductService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.data.domain.Page;
 
 import java.util.List;
 
@@ -30,8 +30,19 @@ public class ProductController {
         return productService.getAllProducts();
     }
 
+    @GetMapping
+    public Page<Product> getProductsByPage(
+
+            @RequestParam(defaultValue = "0") int page,
+
+            @RequestParam(defaultValue = "6") int size) {
+
+        return productService.getProductsByPage(page, size);
+
+    }
+
     @GetMapping("/{id}")
-    public Product getProduct(@PathVariable long id) {
+    public Product getProduct(@PathVariable Long id) {
         return productService.getProductById(id);
     }
 
@@ -47,4 +58,5 @@ public class ProductController {
 
         return productService.deleteProduct(id);
     }
+
 }

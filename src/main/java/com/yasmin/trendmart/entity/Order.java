@@ -14,15 +14,30 @@ import jakarta.persistence.CascadeType;
 @NoArgsConstructor
 @AllArgsConstructor
 public class Order {
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-
+    private Long userId;
 
     @NotBlank
     private String customerName;
+
+    @NotBlank
+    private String phone;
+
+    @NotBlank
+    @Column(length = 1000)
+    private String address;
+
+    @NotBlank
+    private String city;
+
+    @NotBlank
+    private String state;
+
+    @NotBlank
+    private String pincode;
 
     @NotNull
     private Double totalAmount;
@@ -30,7 +45,13 @@ public class Order {
     @NotBlank
     private String status;
 
-    @OneToMany(cascade = CascadeType.ALL)
+    private String orderDate;;
+
+    @OneToMany(
+            cascade = CascadeType.ALL,
+            fetch = FetchType.EAGER
+    )
+    @JoinColumn(name = "order_id")
     private List<OrderItem> items;
 
 }

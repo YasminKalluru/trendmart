@@ -4,7 +4,7 @@ import com.yasmin.trendmart.entity.Cart;
 import com.yasmin.trendmart.service.CartService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.bind.annotation.CrossOrigin;
+
 import java.util.List;
 
 @CrossOrigin(origins = {
@@ -20,16 +20,44 @@ public class CartController {
 
     @PostMapping("/add")
     public Cart addToCart(@RequestBody Cart cart) {
+
         return cartService.addToCart(cart);
+
     }
 
-    @GetMapping("/all")
-    public List<Cart> getCartItems() {
-        return cartService.getCartItems();
+    @GetMapping("/all/{userId}")
+    public List<Cart> getCartItems(
+            @PathVariable Long userId
+    ) {
+        return cartService.getCartItems(userId);
     }
+
     @DeleteMapping("/remove/{id}")
-    public String removeFromCart(@PathVariable Long id) {
+    public String removeFromCart(
+            @PathVariable Long id
+    ) {
+
         cartService.removeFromCart(id);
+
         return "Item removed";
+
+    }
+
+    @PutMapping("/increase/{id}")
+    public Cart increaseQuantity(
+            @PathVariable Long id
+    ) {
+
+        return cartService.increaseQuantity(id);
+
+    }
+
+    @PutMapping("/decrease/{id}")
+    public Cart decreaseQuantity(
+            @PathVariable Long id
+    ) {
+
+        return cartService.decreaseQuantity(id);
+
     }
 }

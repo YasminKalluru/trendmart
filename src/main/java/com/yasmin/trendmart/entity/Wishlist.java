@@ -1,24 +1,24 @@
 package com.yasmin.trendmart.entity;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 @Entity
-@Table(name = "order_item")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class OrderItem {
+public class Wishlist {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    private Long userId;
+
     private String productName;
 
-    private Integer quantity;
+    private double price;
 
-    private Double price;
+    private String imageUrl;
+
 }
